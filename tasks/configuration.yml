@@ -17,12 +17,55 @@
 # limitations under the License.
 #
 
+- name: change owner of log folder
+  file:
+    dest: /var/log/horizon/
+    state: directory
+    owner: "{{ APACHE_USER }}"
+    group: "{{ APACHE_USER }}"
+
+- name: configure log location
+  lineinfile:
+    dest: /etc/httpd/conf.d/openstack-dashboard.conf
+    line: "{{ item }}"
+  with_items:
+    - 'ErrorLog /var/log/horizon/horizon_error.log'
+    - 'LogLevel info'
+    - 'CustomLog /var/log/horizon/horizon_access.log combined'
+  notify: Restart Apache2
+
+- name: change owner of openstack-dashboard source folder
+  file:
+    dest: /usr/share/openstack-dashboard/openstack_dashboard
+    state: directory
+    owner: root
+    group: "{{ APACHE_USER }}"
+    recurse: yes
+
+- name: change owner of openstack-dashboard static folder
+  file:
+    dest: /usr/share/openstack-dashboard/static
+    state: directory
+    owner: root
+    group: "{{ APACHE_USER }}"
+    recurse: yes
+
+- name: change permission openstack-dashboard etc folder
+  file:
+    dest: /etc/openstack-dashboard
+    state: directory
+    owner: root
+    group: "{{ APACHE_USER }}"
+    recurse: yes
+
 - name: Configure openstack-dashboard local_settings file
   lineinfile:
     dest: '{{ openstack_horizon_dashboard_settings }}'
     regexp: '{{ item.regexp }}'
     line: '{{ item.line }}'
   with_items:
+    - {regexp: '^DEBUG =', line: "DEBUG = False"}
+    - {regexp: '^WEBROOT =', line: "WEBROOT = '/dashboard'"}
     - {regexp: '^OPENSTACK_HOST =', line: "OPENSTACK_HOST = '{{ openstack_horizon_keystone_hostname }}'"}
     - {regexp: '^ALLOWED_HOSTS =', line: "ALLOWED_HOSTS = ['*', ]"}
     - {regexp: '^SESSION_ENGINE =', line: "SESSION_ENGINE = 'django.contrib.sessions.backends.cache'"}

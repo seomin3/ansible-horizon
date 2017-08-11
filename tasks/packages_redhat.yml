@@ -26,3 +26,17 @@
     - 'memcached'
     - 'mod_wsgi'
     - 'openstack-dashboard'
+
+- name: copy openstack policy file
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    remote_src: yes
+    owner: root
+    group: "{{ APACHE_USER }}"
+    mode: 0640
+  with_items:
+    - { src: '/etc/keystone/policy.json', dest: '/etc/openstack-dashboard/keystone_policy.json' }
+    - { src: '/etc/glance/policy.json', dest: '/etc/openstack-dashboard/glance_policy.json' }
+    - { src: '/etc/nova/policy.json', dest: '/etc/openstack-dashboard/nova_policy.json' }
+    - { src: '/etc/neutron/policy.json', dest: '/etc/openstack-dashboard/neutron_policy.json' }
